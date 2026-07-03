@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CroPrompt - Bounded Prompt Engineering Engine</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // Theme initialization block to prevent flash
+    (function () {
+      try {
+        const theme = localStorage.getItem('ps:theme') || 'dark';
+        if (theme === 'light') {
+          document.documentElement.classList.add('light-mode');
+        }
+      } catch (_) {}
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Background Particle & meteor Animation layer -->
+  <div class="background-wrapper">
+    <div class="aurora"></div>
+    <div class="meteors">
+      <div class="meteor"></div>
+      <div class="meteor"></div>
+      <div class="meteor"></div>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:2px"><path d="m12 3-1.912 5.886L4.202 9l5.886 1.912L12 16.798l1.912-5.886L19.798 10l-5.886-1.912zM5 3v4M3 5h4M19 17v4M17 19h4"/></svg>
+      Cro<span>Prompt</span>
+    </div>
+    
+    <!-- Top-Level Workspaces navigation tabs -->
+    <div class="nav-tabs" role="tablist">
+      <button class="nav-tab active" onclick="switchWorkspace('builder')">Workspace</button>
+      <button class="nav-tab" onclick="switchWorkspace('nodes')">Node Automations</button>
+      <button class="nav-tab" onclick="switchWorkspace('arena')">Evaluation Arena</button>
+      <button class="nav-tab" onclick="switchWorkspace('vcs')">Prompt VCS</button>
+      <button class="nav-tab" onclick="switchWorkspace('theme')">Theme Designer</button>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-theme" onclick="toggleTheme()" aria-label="Toggle Light/Dark Theme">
+        <svg id="theme-ico-dark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="theme-ico-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero panel -->
+  <section class="hero">
+    <div class="badge">
+      <span></span> Model Context Protocol & Google Gemini Connectors Active
+    </div>
+    <h1>CroPrompt <span>Studio</span>.</h1>
+    <p>Construct AST context-bounded task briefs, build visual pipeline flows, and track prompt version commits locally.</p>
+  </section>
+
+  <div class="layout-container">
+    
+    <!-- 1. WORKSPACE: BUILDER WORKSPACE -->
+    <div id="ws-builder" class="workspace-wrapper workspace-active">
+      <section class="panel" style="flex-grow:1;">
+        <div class="panel-head">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h2 id="panel-title">Code Brief Engineering</h2>
+              <p id="panel-desc">Assemble context-bounded task briefs optimized for AI coding agents.</p>
+            </div>
+            <div class="nav-tabs" style="padding:2px; border-radius:8px;">
+              <button class="nav-tab active" style="padding:6px 12px; font-size:12px; border-radius:6px;" onclick="setCategory('code')">Code</button>
+              <button class="nav-tab" style="padding:6px 12px; font-size:12px; border-radius:6px;" onclick="setCategory('design')">Design</button>
+              <button class="nav-tab" style="padding:6px 12px; font-size:12px; border-radius:6px;" onclick="setCategory('marketing')">Marketing</button>
+              <button class="nav-tab" style="padding:6px 12px; font-size:12px; border-radius:6px;" onclick="setCategory('image')">Image / Art</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live API Key Panel -->
+        <div class="api-drawer" style="margin-bottom:12px">
+          <h3 onclick="toggleApiDrawer()" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; margin:0">
+            <span>⚙️ Live LLM API Connection</span>
+            <span id="api-drawer-status" style="font-size:12px; color:var(--fg-muted)">[Configure Key]</span>
+          </h3>
+          <div id="api-drawer-body" style="display:none; margin-top:14px">
+            <div class="form-group" style="margin-bottom:12px">
+              <label class="form-label">API Provider</label>
+              <select id="api-provider" onchange="updateApiKeyPlaceholder()">
+                <option value="gemini">Google Gemini (CORS-friendly)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:12px">
+              <label class="form-label">API Key <span>Stored locally in your browser storage</span></label>
+              <input type="password" id="api-key" placeholder="Enter Gemini API key (AIzaSy...)">
+            </div>
+            <div style="display:flex; gap:8px">
+              <button class="btn-utility" style="padding:6px 12px; font-size:12px" onclick="saveApiKey()">Save Key</button>
+              <button class="btn-utility" style="padding:6px 12px; font-size:12px; color:#ef4444; border-color:rgba(239,68,68,0.2)" onclick="clearApiKey()">Clear Key</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Context Picker Drawer (Supports local folder Picker!) -->
+        <div class="api-drawer" id="context-drawer-wrap" style="margin-bottom:20px">
+          <h3 onclick="toggleContextDrawer()" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; margin:0">
+            <span>📁 Codebase Repository Context</span>
+            <span id="context-drawer-status" style="font-size:12px; color:var(--fg-muted)">[Mounted: Defaults]</span>
+          </h3>
+          <div id="context-drawer-body" style="display:none; margin-top:14px">
+            <!-- Directory picker button -->
+            <div style="margin-bottom:16px;">
+              <button class="btn-utility" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="triggerFolderPicker()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Mount Project Folder (HTML5 Directory Picker)
+              </button>
+              <p style="font-size:11px; color:var(--fg-muted); margin:4px 0 0; text-align:center;">Scans repo structure and tests for sensitive credentials client-side.</p>
+            </div>
+            <div class="form-group" style="margin-bottom:12px">
+              <label class="form-label">Active Git Branch</label>
+              <input type="text" id="ctx-branch" placeholder="e.g. main" value="main">
+            </div>
+            <div class="form-group" style="margin-bottom:12px">
+              <label class="form-label">Project Type</label>
+              <select id="ctx-project-type">
+                <option value="javascript/node">JavaScript (Node.js)</option>
+                <option value="python">Python</option>
+                <option value="generic" selected>Generic / Other</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:12px">
+              <label class="form-label">Available Scripts <span>Comma-separated list</span></label>
+              <input type="text" id="ctx-scripts" placeholder="e.g. test, lint, dev" value="test">
+            </div>
+            <div class="form-group" style="margin-bottom:12px">
+              <label class="form-label">Files In Focus <span>Comma-separated paths (credentials are auto-redacted)</span></label>
+              <textarea id="ctx-files" placeholder="e.g. src/index.js, src/utils/helper.js" style="min-height:60px"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">1. Select Target Model</label>
+          <div class="chips" id="model-chips"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">2. Select Template Blueprint</label>
+          <select id="template-select" onchange="loadTemplateFields()"></select>
+        </div>
+
+        <div class="form-group" id="fields-container"></div>
+
+        <button class="btn-compile" onclick="compilePrompt()">Run CroPrompt Pipeline</button>
+
+        <div class="loading-overlay" id="loading-overlay">
+          <div class="spinner"></div>
+          <div style="font-size:14px; color:var(--fg-muted);" id="loading-text">Analyzing Visual Intent...</div>
+        </div>
+
+        <div class="result-container" id="result-container">
+          <div class="form-group">
+            <label class="form-label">Optimized Brief Output <span>Copy & paste directly into your agent</span></label>
+            <div class="result-box" id="result-box"></div>
+          </div>
+          <div class="result-actions" style="justify-content:space-between; width:100%;">
+            <div style="display:flex; gap:10px;">
+              <button class="btn-utility" id="btn-copy" onclick="copyResult()">Copy to Clipboard</button>
+              <button class="btn-utility" onclick="commitCurrentPrompt()">Commit Version</button>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:12px; color:var(--fg-muted); display:flex; align-items:center;" id="token-calculator">
+              Estimated tokens: 0 (Cost: $0.00)
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sidebar History Drawer -->
+      <aside class="panel history-panel" style="width:340px;">
+        <div class="panel-head">
+          <h2>Prompt History</h2>
+          <p>Pre-compiled history logs saved in local storage.</p>
+        </div>
+        <div class="history-list" id="history-list"></div>
+      </aside>
+    </div>
+
+    <!-- 2. WORKSPACE: NODE AUTOMATIONS GRAPH -->
+    <div id="ws-nodes" class="workspace-wrapper" style="grid-template-columns: 1fr;">
+      <section class="panel">
+        <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h2>Visual Pipeline Automations</h2>
+            <p>Compose prompt pipelines visually by dragging, connecting, and sorting execution nodes.</p>
+          </div>
+          <button class="btn-utility" onclick="runCanvasWorkflow()">Execute Workflow</button>
+        </div>
+        
+        <!-- Graph Editor canvas workspace -->
+        <div style="background:#030712; border:1px solid var(--border-strong); border-radius:var(--radius-md); position:relative;">
+          <canvas id="node-canvas"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <!-- 3. WORKSPACE: EVALUATION ARENA -->
+    <div id="ws-arena" class="workspace-wrapper" style="grid-template-columns: 1fr;">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Prompt Evaluation Arena</h2>
+          <p>Test and compare prompt variations side-by-side. Measure performance, latency, and estimated token budgets.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <!-- Model A Column -->
+          <div style="display:flex; flex-direction:column; gap:12px; border-right:1px solid var(--border); padding-right:20px;">
+            <h3 style="margin:0; font-size:16px;">Prompt Version A (Standard)</h3>
+            <textarea id="arena-prompt-a" placeholder="Enter standard prompt..." style="min-height:100px; font-family:var(--font-mono);"></textarea>
+            <button class="btn-utility" onclick="runArenaCompare('a')">Test Prompt A</button>
+            <div class="result-box" id="arena-output-a" style="min-height:120px; font-size:13px;">Output A placeholder.</div>
+            <div style="font-family:var(--font-mono); font-size:11.5px; color:var(--fg-muted);" id="arena-meta-a">
+              Tokens: 0 · Latency: 0s · Est Cost: $0.00
+            </div>
+          </div>
+          <!-- Model B Column -->
+          <div style="display:flex; flex-direction:column; gap:12px; padding-left:10px;">
+            <h3 style="margin:0; font-size:16px;">Prompt Version B (CroPrompt Enhanced)</h3>
+            <textarea id="arena-prompt-b" placeholder="Paste CroPrompt optimized brief..." style="min-height:100px; font-family:var(--font-mono);"></textarea>
+            <button class="btn-utility" onclick="runArenaCompare('b')">Test Prompt B</button>
+            <div class="result-box" id="arena-output-b" style="min-height:120px; font-size:13px;">Output B placeholder.</div>
+            <div style="font-family:var(--font-mono); font-size:11.5px; color:var(--fg-muted);" id="arena-meta-b">
+              Tokens: 0 · Latency: 0s · Est Cost: $0.00
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 4. WORKSPACE: PROMPT VERSION CONTROL (VCS) -->
+    <div id="ws-vcs" class="workspace-wrapper" style="grid-template-columns: 320px 1fr;">
+      <!-- Commits Panel -->
+      <aside class="panel">
+        <div class="panel-head">
+          <h2>Commit Logs</h2>
+          <p>List of saved revisions.</p>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label class="form-label" style="font-size:12.5px;">Commit Message</label>
+          <input type="text" id="vcs-message" placeholder="e.g. adjust database bounds" value="Update prompt brief">
+        </div>
+        <div class="history-list" id="vcs-commit-list">
+          <!-- Commit listings populated dynamically -->
+        </div>
+      </aside>
+
+      <!-- Diff Viewer Panel -->
+      <section class="panel">
+        <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h2>Visual Diffs Inspector</h2>
+            <p>Compare committed revisions side-by-side. Highlights are color-coded.</p>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <select id="vcs-compare-a" style="padding:6px; font-size:12px;" onchange="renderVisualDiff()"></select>
+            <span style="align-self:center; font-size:13px; color:var(--fg-muted);">vs</span>
+            <select id="vcs-compare-b" style="padding:6px; font-size:12px;" onchange="renderVisualDiff()"></select>
+          </div>
+        </div>
+
+        <div id="vcs-diff-box" style="background:rgba(3,7,18,0.5); border:1px solid var(--border-strong); border-radius:var(--radius-md); padding:16px; font-family:var(--font-mono); font-size:13px; overflow-y:auto; max-height:450px;">
+          Select versions above to compare additions (<ins style="background:rgba(16,185,129,0.25); text-decoration:none; color:#10b981;">+ green</ins>) and deletions (<del style="background:rgba(239,68,68,0.25); text-decoration:line-through; color:#ef4444;">- red</del>).
+        </div>
+      </section>
+    </div>
+
+    <!-- 5. WORKSPACE: THEME DESIGNER -->
+    <div id="ws-theme" class="workspace-wrapper" style="grid-template-columns: 1fr;">
+      <section class="panel">
+        <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h2>CSS Theme Customization Studio</h2>
+            <p>Modify layout visual variables in real-time, preview styling changes instantly, and export the theme sheet.</p>
+          </div>
+          <button class="btn-utility" onclick="exportCustomTheme()">Export Custom style.css</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px;">
+          <!-- Controls Panel -->
+          <div style="display:flex; flex-direction:column; gap:20px;">
+            <div class="form-group">
+              <label class="form-label">Accent Highlight Color (Primary)</label>
+              <div style="display:flex; gap:12px; align-items:center;">
+                <input type="color" id="theme-primary" value="#0099ff" onchange="updateThemeVariables()" style="padding:0; width:44px; height:44px; border-radius:50%; cursor:pointer;">
+                <input type="text" id="theme-primary-text" value="#0099ff" oninput="updateThemeTextVariable()" style="flex-grow:1;">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Glow Radius (Opacity) <span id="glow-radius-val">45%</span></label>
+              <input type="range" id="theme-glow" min="10" max="90" value="45" oninput="updateThemeVariables()" style="cursor:pointer;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cards Border Corner Radius <span id="corner-radius-val">20px</span></label>
+              <input type="range" id="theme-radius" min="4" max="32" value="20" oninput="updateThemeVariables()" style="cursor:pointer;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Font Family Stack</label>
+              <select id="theme-font" onchange="updateThemeVariables()">
+                <option value="'Geist', sans-serif">Geist Sans (Clean, Modern)</option>
+                <option value="-apple-system, BlinkMacSystemFont, sans-serif">System Default</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Preview box panel -->
+          <div style="border:1px dashed var(--border-strong); border-radius:var(--radius-md); padding:24px; display:flex; flex-direction:column; gap:16px; justify-content:center; background:rgba(255,255,255,0.01)">
+            <h3 style="margin:0; font-size:16px; text-align:center;">Interactive Styling Preview</h3>
+            <div class="badge" style="align-self:center; margin-bottom:0;">
+              <span></span> Preview Accent Badge
+            </div>
+            <button class="btn-compile" style="max-width:320px; align-self:center;">Preview Primary Button</button>
+            <div class="chips" style="justify-content:center;">
+              <div class="chip active">Active Chip</div>
+              <div class="chip">Default Chip</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Rebranded Prompt Library Section -->
+    <section class="panel">
+      <div class="library-head">
+        <div>
+          <h2>CroPrompt Template Library</h2>
+          <p style="margin:4px 0 0; font-size:14px; color:var(--fg-muted);">Browse and copy modular prompt templates instantly.</p>
+        </div>
+        <div class="search-wrapper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="library-search" placeholder="Search templates..." oninput="filterLibrary()">
+        </div>
+      </div>
+      <div class="library-grid" id="library-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Comparison Table Section -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Why CroPrompt?</h2>
+        <p>A comparison of raw prompt queries versus context-bounded briefs.</p>
+      </div>
+      <table class="vs-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Raw Prompt Query</th>
+            <th>CroPrompt Enhanced Brief</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Token Usage</strong></td>
+            <td>High context wastage (reads random files)</td>
+            <td>Optimized context budget (exact paths guides)</td>
+          </tr>
+          <tr>
+            <td><strong>Safety Safeguards</strong></td>
+            <td>Risk of credential leakage (.env / keys)</td>
+            <td>Automatic credential filters active</td>
+          </tr>
+          <tr>
+            <td><strong>Verification Criteria</strong></td>
+            <td>No automated validation tests suggested</td>
+            <td>Regression checks auto-appended</td>
+          </tr>
+          <tr>
+            <td><strong>Refactoring Risk</strong></td>
+            <td>Alters public method signatures</td>
+            <td>Locked contracts constraint active</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <script type="module" src="app.js?v=7"></script>
+</body>
+</html>

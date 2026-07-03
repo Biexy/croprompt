@@ -1,0 +1,24 @@
+{
+  "name": "croprompt",
+  "version": "1.0.0",
+  "description": "CroPrompt - Bounded Prompt Engineering Engine. Fully serverless SPA with interactive templates, Gemini API connector, prompt history, and catalog search.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server ./ -p 8080 -c-1 -o",
+    "dev": "npx http-server ./ -p 8080 -c-1 -o"
+  },
+  "keywords": [
+    "prompt-engineering",
+    "developer-tools",
+    "midjourney",
+    "claude",
+    "gemini",
+    "croprompt"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

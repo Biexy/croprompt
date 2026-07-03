@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Local data files
+history.json
+package-lock.json
+
+# Agent metadata
+.agents/
+
+# Stale duplicate folders
+croprompt/
+
+# OS files
+.DS_Store
+Thumbs.db
